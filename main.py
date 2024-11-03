@@ -30,7 +30,13 @@ BUTTON_COLOR = (180, 180, 180)
 BUTTON_HOVER_COLOR = (150, 150, 150)
 
 pygame.init()
+pygame.mixer.init()
 font = pygame.font.SysFont(None, 30)
+
+pygame.mixer.music.load('mergemmaideparte.mp3') 
+
+pygame.mixer.music.set_volume(0.5)
+pygame.mixer.music.play(-1) 
 
 class Spot:
     def __init__(self, row, col, width):
@@ -79,7 +85,7 @@ class Spot:
         self.color = GREEN
 
     def make_path(self):
-        self.color = PINK
+        self.color = TURQUOISE
 
     def draw(self, window):
         pygame.draw.rect(window, self.color, (self.x, self.y, self.width, self.width))
@@ -89,16 +95,16 @@ class Spot:
         total_rows = len(grid)
         total_cols = len(grid[0])
 
-        if self.row < total_rows - 1 and not grid[self.row + 1][self.col].is_barrier():  #DOWN
+        if self.row < total_rows - 1 and not grid[self.row + 1][self.col].is_barrier(): #DOWN
             self.neighbors.append(grid[self.row + 1][self.col])
 
-        if self.row > 0 and not grid[self.row - 1][self.col].is_barrier():  #UP
+        if self.row > 0 and not grid[self.row - 1][self.col].is_barrier(): #UP
             self.neighbors.append(grid[self.row - 1][self.col])
 
-        if self.col < total_cols - 1 and not grid[self.row][self.col + 1].is_barrier():  #RIGHT
+        if self.col < total_cols - 1 and not grid[self.row][self.col + 1].is_barrier(): #RIGHT
             self.neighbors.append(grid[self.row][self.col + 1])
 
-        if self.col > 0 and not grid[self.row][self.col - 1].is_barrier():  #LEFT
+        if self.col > 0 and not grid[self.row][self.col - 1].is_barrier(): #LEFT
             self.neighbors.append(grid[self.row][self.col - 1])
 
     def __lt__(self, other):
@@ -338,7 +344,40 @@ def bfs(draw, grid, start, end):
     return False
 
 def dfs(draw, grid, start, end):
-    
+    stack = [(start, [start])] 
+    visited = set()
+
+    while stack:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+
+        current_node, path = stack.pop()
+
+        if current_node == end:
+            print("Path:")
+            print("Start")
+            for step in path:
+                print(f"    ({step.row}, {step.col})")
+            print("Goal")
+            print(f"Length: {len(path) - 1} steps")
+            reconstruct_path({step: path[idx - 1] for idx, step in enumerate(path) if idx > 0}, end, draw, start, end)
+            end.make_end()
+            return True
+
+        if current_node not in visited:
+            visited.add(current_node)
+
+            if current_node != start:
+                current_node.make_closed()
+
+            for neighbor in current_node.neighbors:
+                if neighbor not in visited and not neighbor.is_barrier():
+                    stack.append((neighbor, path + [neighbor]))
+                    if neighbor != start and neighbor != end:
+                        neighbor.make_open()
+
+            draw()
 
     print("Path not found")
     return False
